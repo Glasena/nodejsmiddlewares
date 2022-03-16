@@ -9,20 +9,118 @@ app.use(cors());
 
 const users = [];
 
+function checkUserByUsername(username){
+
+  const user = users.find(user => user.username === username);
+
+  return user;
+
+}
+
+function checkUserById(id){
+
+  const user = users.find((user) => user.id === id);
+
+  return user;
+
+}
+
+function checkTodoById(id, user){
+
+  const todos = user.todos;
+
+  const todo = todos.find((todo) => todo.id === id);
+
+  return todo;
+
+}
+
+function uuidValidateV4(uuid) {
+
+  return uuid.validate(uuid) && uuidVersion(uuid) === 4;
+
+}
+
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+  
+  const { username } = request.headers;
+
+  const user = checkUserByUsername(username);
+
+  if (!user){
+    return response.status(404).json({error: 'User not found'});
+  }
+
+  request.user = user;
+
+  return next();
+
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
-  // Complete aqui
+   
+  user = request.user;
+
+  if (user.pro){
+    return next();
+  }
+
+  let lenght = user.todos.length;
+
+  if(lenght < 10){
+    return next();
+  }
+
+  return response.status(403).json({error: 'No Permission to create a new todo'});
+
 }
 
 function checksTodoExists(request, response, next) {
-  // Complete aqui
+  
+  const { username } = request.headers;
+  const { id } = request.params;
+
+  const user = checkUserByUsername(username);
+
+  if (!user){
+    return response.status(404).json({error: 'User not found !'});
+  }
+
+  const Exists = validate(id);
+
+  if(!Exists){
+    return response.status(400).json({error: 'Invalid ID'});
+  }
+  
+  const todo = checkTodoById(id, user);
+
+  console.log(todo)
+
+  if (!todo){
+    return response.status(404).json({error: 'Todo not found !'});
+  }
+
+  request.user = user;
+  request.todo = todo;
+
+  return next();
+
 }
 
 function findUserById(request, response, next) {
-  // Complete aqui
+
+  const { id } = request.params;
+
+  const user = checkUserById(id);
+  
+  if (!user){
+    return response.status(404).json({error: 'User not found'});
+  }
+
+  request.user = user;
+
+  return next();
+
 }
 
 app.post('/users', (request, response) => {
